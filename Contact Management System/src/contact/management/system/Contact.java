@@ -1,55 +1,68 @@
 package contact.management.system;
 
-import java.io.*;
 
 import java.io.Serializable;
+
 public class Contact implements Serializable {
-    private String ContactName;
-    private String ContactNumber;
-    private String ConactEmail;
-    private String ConactID;
+    private static final long serialVersionUID = 1L;
+    private  String contactName;
+    private  String contactNumber;
+    private  String contactEmail;
+    private String contactID;
 
-    public void setContactName(String ContactName) {
-        this.ContactName = ContactName;
+    public Contact(String contactName, String contactNumber, String contactEmail) {
+        this.contactName = contactName;
+        this.contactNumber = contactNumber;
+        this.contactEmail = contactEmail;
+        this.contactID = genConID(contactName, contactNumber, contactEmail);
     }
 
-    public void setContactNumber(String ContactNumber) {
-        this.ContactNumber = ContactNumber;
-    }
-
-    public void setConactEmail(String ConactEmail) {
-        this.ConactEmail = ConactEmail;
-    }
-
-    public void setConactID(String ConactID) {
-        this.ConactID = ConactID;
+    private String genConID(String contactName, String contactNumber, String contactEmail) {
+    String nameSubstring = contactName.length() >= 3 ? contactName.substring(0, 3) : contactName;
+    String numberSubstring = contactNumber.length() >= 3 ? contactNumber.substring(0, 3) : contactNumber;
+    String emailSubstring = contactEmail.length() >= 3 ? contactEmail.substring(0, 3) : contactEmail;
+    
+    return nameSubstring + numberSubstring + emailSubstring;
+   }
+    
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
     }
 
     public String getContactName() {
-        return ContactName;
+        return contactName;
     }
 
     public String getContactNumber() {
-        return ContactNumber;
+        return contactNumber;
     }
 
-    public String getConactEmail() {
-        return ConactEmail;
+    public String getContactEmail() {
+        return contactEmail;
     }
 
-    public String getConactID() {
-        return ConactID;
+    public String getContactID() {
+        return contactID;
     }
-    
-public Contact(String ContactName, String ContactNumber, String ConactEmail) {
-    this.ContactName = ContactName;
-    this.ContactNumber = ContactNumber;
-    this.ConactEmail = ConactEmail;
-    this.ConactID = GenConID(ContactName, ContactNumber, ConactEmail);
-}
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
+    }
 
-    String GenConID(String ConactName, String ConactNumber, String ConactEmail){
-      return ContactName.substring(0, 3) + ConactNumber.substring(0, 3) + ConactEmail.substring(0, 3);
-    }    
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public void setContactID(String contactID) {
+        this.contactID = contactID;
+    }
+   
+    @Override
+    public String toString() {
+        return contactName + " | " + contactNumber + " | " + contactEmail;
+    }
 
 }
