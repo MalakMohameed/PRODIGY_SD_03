@@ -1,5 +1,6 @@
 import contact.management.system.Contact;
 import contact.management.system.FileManager;
+import java.io.IOException;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
@@ -8,8 +9,10 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-
 import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GUI extends Application {
 
@@ -22,6 +25,13 @@ public class GUI extends Application {
 
         Label numberLabel = new Label("Number:");
         TextField numberTextField = new TextField();
+        numberTextField.setOnKeyTyped(event -> {
+            char input = event.getCharacter().charAt(0);
+            if (!Character.isDigit(input) && input != '\b'){
+                showAlert("Invalid Input", "Please enter numeric values only (0-9).");
+                event.consume();
+            }
+        });
 
         Label emailLabel = new Label("Email:");
         TextField emailTextField = new TextField();
@@ -31,38 +41,65 @@ public class GUI extends Application {
         Button addButton = new Button("Add Contact");
         addButton.setStyle("-fx-background-color: green; -fx-text-fill: white;");
         addButton.setOnAction(e -> {
-            Contact newContact = new Contact(nameTextField.getText(), numberTextField.getText(), emailTextField.getText());
-            FileManager.saveContact(newContact, "contacts.bin");
+            String name = nameTextField.getText();
+            String number = numberTextField.getText();
+            String email = emailTextField.getText();
+
+            if (isDuplicate(name, number, email)) {
+                showAlert("Duplicate Entry", "The contact already exists in the database.");
+                return;
+            }
+            else if(emailTextField.getText().isBlank()||numberTextField.getText().isBlank()|nameTextField.getText().isBlank()){
+                 showAlert("Empty Entry", "Please enter data.");
+                 return;
+            }
+
+            Contact newContact = new Contact(name, number, email);
+            try {
+                FileManager.saveContact(newContact, "contacts.bin");
+            } catch (IOException ex) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
             success.setText("Contact Added Successfully!");
             success.setStyle("-fx-text-fill: green;");
             nameTextField.clear();
             numberTextField.clear();
             emailTextField.clear();
-            tableView.getItems().add(newContact); // Add new contact to TableView
+            tableView.getItems().add(newContact);
         });
 
         Button deleteButton = new Button("Delete Contact");
         deleteButton.setStyle("-fx-background-color: red; -fx-text-fill: white;");
-        deleteButton.setDisable(true);
         deleteButton.setOnAction(e -> {
             Contact selectedContact = tableView.getSelectionModel().getSelectedItem();
             if (selectedContact != null) {
                 tableView.getItems().remove(selectedContact);
-                FileManager.deleteContact(selectedContact, "contacts.bin");
+                try {
+                    FileManager.deleteContact(selectedContact, "contacts.bin");
+                } catch (IOException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
-        Button saveButton = new Button("Save");
-        saveButton.setDisable(true);
-        saveButton.setOnAction(e -> {
-            // Implement save functionality here
+        //Button saveButton = new Button("Save");
+        primaryStage.setOnCloseRequest(event -> {
+           List<Contact> allContacts = tableView.getItems();
+            try {
+                FileManager.saveContacts(allContacts, "contacts.bin");
+            } catch (IOException ex) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.out.println("All contacts saved successfully!");
         });
 
-        Button editButton = new Button("Edit Contacts");
+        Button editButton = new Button("Edit Contact");
         editButton.setOnAction(e -> {
-            saveButton.setDisable(false);
-            deleteButton.setDisable(false);
-            tableView.setDisable(false);
+            Contact selectedContact = tableView.getSelectionModel().getSelectedItem();
+            if (selectedContact != null) {
+                openEditContactWindow(selectedContact);
+                
+            }
         });
 
         GridPane root = new GridPane();
@@ -78,7 +115,6 @@ public class GUI extends Application {
         root.add(emailTextField, 1, 2);
         root.add(addButton, 0, 3);
         root.add(editButton, 0, 5);
-        root.add(saveButton, 1, 5);
         root.add(deleteButton, 2, 5);
         root.add(success, 1, 3, 2, 1);
 
@@ -107,7 +143,6 @@ public class GUI extends Application {
         Scene scene = new Scene(root, 370, 400);
         primaryStage.setTitle("Contact Management System");
         primaryStage.getIcons().add(new Image("icon.png"));
-        primaryStage.setResizable(false);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -115,4 +150,70 @@ public class GUI extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
+    private boolean isDuplicate(String name, String number, String email) {
+        for (Contact contact : tableView.getItems()) {
+            if (contact.getContactName().equals(name) || contact.getContactNumber().equals(number) || contact.getContactEmail().equals(email)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    private void openEditContactWindow(Contact contact) {
+    Stage editStage = new Stage();
+    editStage.setTitle("Edit Contact");
+    
+    Label nameLabel = new Label("Name:");
+    TextField nameTextField = new TextField(contact.getContactName());
+    
+    Label numberLabel = new Label("Number:");
+    TextField numberTextField = new TextField(contact.getContactNumber());
+    numberTextField.setOnKeyTyped(event -> {
+            char input = event.getCharacter().charAt(0);
+            if (!Character.isDigit(input) && input != '\b'){
+                showAlert("Invalid Input", "Please enter numeric values only (0-9).");
+                event.consume();
+            }
+        });
+        
+    Label emailLabel = new Label("Email:");
+    TextField emailTextField = new TextField(contact.getContactEmail());
+    
+    Button saveButton = new Button("Save");
+    saveButton.setOnAction(e -> {
+        contact.setContactName(nameTextField.getText());
+        contact.setContactNumber(numberTextField.getText());
+        contact.setContactEmail(emailTextField.getText());
+        
+        try {
+            FileManager.saveContact(contact, "contacts.bin");
+        } catch (IOException ex) {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        editStage.close();
+        tableView.refresh();
+    });
+    
+    GridPane editGrid = new GridPane();
+    editGrid.setPadding(new Insets(10));
+    editGrid.setHgap(10);
+    editGrid.setVgap(10);
+    editGrid.addRow(0, nameLabel, nameTextField);
+    editGrid.addRow(1, numberLabel, numberTextField);
+    editGrid.addRow(2, emailLabel, emailTextField);
+    editGrid.add(saveButton, 0, 3, 2, 1);
+    
+    Scene editScene = new Scene(editGrid, 250, 150);
+    editStage.setScene(editScene);
+    editStage.setResizable(false);
+    editStage.show();
+}
 }

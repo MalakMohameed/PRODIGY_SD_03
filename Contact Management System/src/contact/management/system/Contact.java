@@ -2,6 +2,7 @@ package contact.management.system;
 
 
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Contact implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -14,16 +15,12 @@ public class Contact implements Serializable {
         this.contactName = contactName;
         this.contactNumber = contactNumber;
         this.contactEmail = contactEmail;
-        this.contactID = genConID(contactName, contactNumber, contactEmail);
+        this.contactID = genConID();
     }
 
-    private String genConID(String contactName, String contactNumber, String contactEmail) {
-    String nameSubstring = contactName.length() >= 3 ? contactName.substring(0, 3) : contactName;
-    String numberSubstring = contactNumber.length() >= 3 ? contactNumber.substring(0, 3) : contactNumber;
-    String emailSubstring = contactEmail.length() >= 3 ? contactEmail.substring(0, 3) : contactEmail;
-    
-    return nameSubstring + numberSubstring + emailSubstring;
-   }
+    private String genConID() {
+        return UUID.randomUUID().toString();
+    }
     
     public static long getSerialVersionUID() {
         return serialVersionUID;
